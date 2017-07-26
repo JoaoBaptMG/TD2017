@@ -13,28 +13,28 @@ void traverse(ExpTree* tree, long depth = 0)
             std::cout << tree->getName();
             break;
         case ExpTree::Type::Negation:
-            std::cout << "NEG(";
+            std::cout << "!(";
             traverse(tree->getLeftNode(), depth+1);
             std::cout << ')';
             break;
         case ExpTree::Type::And:
-            std::cout << "AND(";
+            std::cout << '(';
             traverse(tree->getLeftNode(), depth+1);
-            std::cout << ',';
+            std::cout << '&';
             traverse(tree->getRightNode(), depth+1);
             std::cout << ')';
             break;
         case ExpTree::Type::Or:
-            std::cout << "OR(";
+            std::cout << '(';
             traverse(tree->getLeftNode(), depth+1);
-            std::cout << ',';
+            std::cout << '|';
             traverse(tree->getRightNode(), depth+1);
             std::cout << ')';
             break;
         case ExpTree::Type::Implies:
-            std::cout << "IMPLIES(";
+            std::cout << '(';
             traverse(tree->getLeftNode(), depth+1);
-            std::cout << ',';
+            std::cout << "->";
             traverse(tree->getRightNode(), depth+1);
             std::cout << ')';
             break;

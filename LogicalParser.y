@@ -33,11 +33,11 @@ void logc_error(yyscan_t, ExpTree*, std::string error);
 top_expr: expression { result = $1; }
 
 expression: %empty {} |
-    expression '&' expression { $$ = new ExpTree(ExpTree::Type::And, std::move($1), std::move($3)); } |
-    expression '|' expression { $$ = new ExpTree(ExpTree::Type::Or, std::move($1), std::move($3)); } |
-    expression IMPLIES expression { $$ = new ExpTree(ExpTree::Type::Implies, std::move($1), std::move($3)); } |
-    '(' expression ')' { $$ = $1; } |
-    '!' expression { $$ = new ExpTree(ExpTree::Type::Negation, std::move($1)); } |
+    expression '&' expression { $$ = new ExpTree(ExpTree::Type::And, $1, $3); } |
+    expression '|' expression { $$ = new ExpTree(ExpTree::Type::Or, $1, $3); } |
+    expression IMPLIES expression { $$ = new ExpTree(ExpTree::Type::Implies, $1, $3); } |
+    '(' expression ')' { $$ = $2; } |
+    '!' expression { $$ = new ExpTree(ExpTree::Type::Negation, $2); } |
     STRING { $$ = $1; } ;
 
 %%

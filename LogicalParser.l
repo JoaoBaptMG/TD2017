@@ -16,7 +16,7 @@
 
 %%
 
-[ \t]   ;
+[ \t\n]   ;
 "&" { *yylval = nullptr; return '&'; }
 "|" { *yylval = nullptr; return '|'; }
 "(" { *yylval = nullptr; return '('; }
