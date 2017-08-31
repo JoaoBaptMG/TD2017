@@ -3,50 +3,63 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <functional>
 
 class ExpTree
 {
 public:
-    enum class Type { Terminal, Negation, Or, And, Implies };
+    enum class Type { Root, Terminal, Negation, Or, And, Implies };
     
 private:
     Type type;
     std::string name;
-    std::unique_ptr<ExpTree> node1, node2;
-    ExpTree* parent;
+    std::shared_ptr<ExpTree> node1 = nullptr, node2 = nullptr;
+    size_t hash;
+    void computeHash();
     
 public:
-    ExpTree(std::string name) : type(Type::Terminal), name(name), node1(), node2() {}
-    ExpTree(Type type, ExpTree* node1, ExpTree* node2 = nullptr)
-    : type(type), name() { setLeftNode(node1); setRightNode(node2); }
+    ExpTree(std::string name) : type(Type::Terminal), name(name), node1(), node2() { computeHash(); }
+    ExpTree(Type type, std::shared_ptr<ExpTree> node1, std::shared_ptr<ExpTree> node2 = nullptr)
+    : type(type), name(), node1(node1), node2(node2) { computeHash(); }
     ~ExpTree() {}
-    
+
+    static std::shared_ptr<ExpTree> True;
+    static std::shared_ptr<ExpTree> False;
+
+    bool isTruehood() const { return type == Type::Terminal && name == "@"; }
+    bool isFalsehood() const { return type == Type::Terminal && name == "#"; }
     auto getType() const { return type; }
     auto getName() const { return name; }
-    auto getLeftNode() const { return node1.get(); }
-    auto getRightNode() const { return node2.get(); }
+    auto getLeftNode() const { return node1; }
+    auto getRightNode() const { return node2; }
+    auto getNode(size_t i) const { return i == 0 ? node1 : node2; }
+    bool operator==(const ExpTree& other) const;
     
-    auto releaseLeftNode()
-    {
-        node1->parent = nullptr; 
-        return node1.release();
-    }
-    auto releaseRightNode()
-    {
-        node2->parent = nullptr;
-        return node2.release();
-    }
-    void setLeftNode(ExpTree* n)
-    {
-        node1.reset(n);
-        if (n) n->parent = this;
-    }
-    void setRightNode(ExpTree* n)
-    {
-        node2.reset(n);
-        if (n) n->parent = this;
-    }
+    void setLeftNode(const std::shared_ptr<ExpTree>& node1);
+    void setRightNode(const std::shared_ptr<ExpTree>& node2);
+    void setNode(size_t i, const std::shared_ptr<ExpTree>& node);
     
-    auto getParent() const { return parent; }
+    friend struct ExpTreeHash;
 };
+
+using ExpPtr = std::shared_ptr<ExpTree>;
+
+struct ExpTreeHash
+{
+    using argument_type = ExpTree;
+    using result_type = size_t;
+    
+    std::size_t operator()(const ExpTree& tree) const;
+};
+
+namespace std
+{
+    template <> struct hash<ExpTree>
+    {
+        std::size_t operator()(const ExpTree& tree) const
+        {
+            return ExpTreeHash()(tree);
+        }
+    };
+}
 
