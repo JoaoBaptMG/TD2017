@@ -23,7 +23,7 @@
 ")" { *yylval = nullptr; return ')'; }
 "!" { *yylval = nullptr; return '!'; }
 "->"    { *yylval = nullptr; return IMPLIES; }
-[a-zA-Z][a-zA-Z0-9]*|#|@    { *yylval = std::make_shared<ExpTree>(std::string(yytext)); return STRING; }
+[a-zA-Z0-9]+|#|@    { *yylval = std::make_shared<ExpTree>(std::string(yytext)); return STRING; }
 .   { *yylval = std::make_shared<ExpTree>("Lex error!"); return ERROR; }
 
 %%
