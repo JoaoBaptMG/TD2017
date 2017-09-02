@@ -63,3 +63,5 @@ namespace std
     };
 }
 
+ExpPtr simplify(ExpPtr, bool intuitionistic = false);
+

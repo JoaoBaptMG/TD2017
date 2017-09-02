@@ -1,7 +1,12 @@
 #include "ExpTree.hpp"
+#include <new>
+
+constexpr bool GlobalSimplificationEnabled = true;
 
 ExpPtr simplify(ExpPtr tree, bool intuitionistic)
 {
+    if (!GlobalSimplificationEnabled) return tree;
+
     if (!tree) return nullptr;
     if (tree->getType() == ExpTree::Type::Terminal)
         return tree;
@@ -20,13 +25,11 @@ ExpPtr simplify(ExpPtr tree, bool intuitionistic)
                 tree->setNode(i, ExpTree::True);
             else if (node->getLeftNode()->getType() == ExpTree::Type::Negation &&
                 *node->getRightNode() == *node->getLeftNode()->getLeftNode())
-                tree->setNode(i, ExpTree::False);
+                tree->setNode(i, node->getLeftNode());
             else if (node->getRightNode()->getType() == ExpTree::Type::Negation &&
                 *node->getLeftNode() == *node->getRightNode()->getLeftNode())
-                tree->setNode(i, ExpTree::False);
-            else if (node->getRightNode()->isTruehood())
-                tree->setNode(i, node->getLeftNode());
-            else if (node->getLeftNode()->isTruehood())
+                tree->setNode(i, node->getRightNode());
+            else if (node->getLeftNode()->isTruehood() || node->getRightNode()->isTruehood())
                 tree->setNode(i, node->getRightNode());
             else if (node->getRightNode()->isFalsehood())
                 tree->setNode(i, std::make_shared<ExpTree>(ExpTree::Type::Negation, node->getLeftNode()));
@@ -38,8 +41,9 @@ ExpPtr simplify(ExpPtr tree, bool intuitionistic)
         {
             auto node = tree->getNode(i);
             
-            if (node->getLeftNode()->getType() == ExpTree::Type::Negation)
-                tree->setNode(i, node->getLeftNode()->getLeftNode());
+            if (node->getLeftNode()->getType() == ExpTree::Type::Negation &&
+                (!intuitionistic || node->getLeftNode()->getLeftNode()->getType() == ExpTree::Type::Negation))
+                    tree->setNode(i, node->getLeftNode()->getLeftNode());
             else if (node->getLeftNode()->isFalsehood())
                 tree->setNode(i, ExpTree::True);
             else if (node->getLeftNode()->isTruehood())
@@ -72,10 +76,10 @@ ExpPtr simplify(ExpPtr tree, bool intuitionistic)
         
             if (node->getLeftNode()->isTruehood() || node->getRightNode()->isTruehood())
                 tree->setNode(i, ExpTree::True);
-            else if (node->getLeftNode()->getType() == ExpTree::Type::Negation &&
+            else if (!intuitionistic && node->getLeftNode()->getType() == ExpTree::Type::Negation &&
                 *node->getRightNode() == *node->getLeftNode()->getLeftNode())
                 tree->setNode(i, ExpTree::True);
-            else if (node->getRightNode()->getType() == ExpTree::Type::Negation &&
+            else if (!intuitionistic && node->getRightNode()->getType() == ExpTree::Type::Negation &&
                 *node->getLeftNode() == *node->getRightNode()->getLeftNode())
                 tree->setNode(i, ExpTree::True);
             else if (*node->getLeftNode() == *node->getRightNode())

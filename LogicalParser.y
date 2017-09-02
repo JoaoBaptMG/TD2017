@@ -31,14 +31,13 @@ void logc_error(yyscan_t, ExpPtr, std::string error);
 
 top_expr: expression { result = std::make_shared<ExpTree>(ExpTree::Type::Root, $1); }
 
-expression: %empty {} |
+expression:
     expression '&' expression { $$ = std::make_shared<ExpTree>(ExpTree::Type::And, $1, $3); } |
     expression '|' expression { $$ = std::make_shared<ExpTree>(ExpTree::Type::Or, $1, $3); } |
     expression IMPLIES expression { $$ = std::make_shared<ExpTree>(ExpTree::Type::Implies, $1, $3); } |
     '(' expression ')' { $$ = std::move($2); } |
     '!' expression { $$ = std::make_shared<ExpTree>(ExpTree::Type::Negation, $2); } |
     STRING { $$ = std::move($1); } ;
-
 %%
 
 void logc_error(yyscan_t, ExpPtr, std::string error)
