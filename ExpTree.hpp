@@ -8,7 +8,7 @@
 class ExpTree
 {
 public:
-    enum class Type { Root, Terminal, Negation, Or, And, Implies };
+    enum class Type { Terminal, Negation, Or, And, Implies };
     
 private:
     Type type;

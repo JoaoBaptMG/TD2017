@@ -54,7 +54,7 @@ void ExpTree::computeHash()
             break;
         default:
             h = (h * 23) ^ node2->hash;
-        case ExpTree::Type::Negation: case ExpTree::Type::Root:
+        case ExpTree::Type::Negation:
             h = (h * 11) ^ node1->hash;
             break;
     }

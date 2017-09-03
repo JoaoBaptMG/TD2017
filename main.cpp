@@ -24,7 +24,6 @@ void traverse(ExpPtr tree, long depth = 0)
             break;
         case ExpTree::Type::Negation:
             std::cout << '!';
-         case ExpTree::Type::Root:
             traverse(tree->getLeftNode(), depth+1);
             break;
         case ExpTree::Type::And:

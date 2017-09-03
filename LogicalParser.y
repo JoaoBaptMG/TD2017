@@ -29,7 +29,7 @@ void logc_error(yyscan_t, ExpPtr, std::string error);
 
 %%
 
-top_expr: expression { result = std::make_shared<ExpTree>(ExpTree::Type::Root, $1); }
+top_expr: expression { result = std::move($1); }
 
 expression:
     expression '&' expression { $$ = std::make_shared<ExpTree>(ExpTree::Type::And, $1, $3); } |
