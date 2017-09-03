@@ -1,3 +1,10 @@
+//=======================================================================
+// step1.cpp
+//=======================================================================
+// Aqui é feito o primeiro passo da tradução das expressões. Se A é uma
+// expressão clássica, então !!A pode ser provado na parte intuicionista
+//=======================================================================
+
 #include "ExpTree.hpp"
 
 ExpPtr convertIntuitionistic(ExpPtr tree)

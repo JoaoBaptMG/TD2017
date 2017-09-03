@@ -1,21 +1,28 @@
+//=====================================================================
+// simplify.cpp
+//=====================================================================
+// Nesse código é feita a simplificação a partir de algumas regras.
+// Isso foi feito mais como um exercício e um exemplo para a
+// manipulação de árvores de expressão
+//=====================================================================
+
 #include "ExpTree.hpp"
 #include <new>
 
-// Turn this "false" to disable simplification
+// Substitua para "false" para desabilitar a simplificação
 constexpr bool GlobalSimplificationEnabled = true;
 
-// Do some simplification techniques
 ExpPtr simplify(ExpPtr tree, bool intuitionistic)
 {
     if (!GlobalSimplificationEnabled) return tree;
-    // Well, we can't simplify a terminal or a nonexistent tree
+    // Ignorar ponteiros vazios
     if (!tree) return nullptr;
 
-    // recursive simplify the child nodes first
+    // Simplificar recursivamente
     tree->setLeftNode(simplify(tree->getLeftNode(), intuitionistic));
     tree->setRightNode(simplify(tree->getRightNode(), intuitionistic));
 
-    // If the node is of type A -> B
+    // Se o nó for do tipo A -> B
     if (tree->getType() == ExpTree::Type::Implies)
     {
         // A -> A: @
@@ -40,10 +47,10 @@ ExpPtr simplify(ExpPtr tree, bool intuitionistic)
         else if (tree->getLeftNode()->isFalsehood())
             return ExpTree::True;
     }
-    // If the node is of type !A
+    // Se o nó for do tipo !A
     else if (tree->getType() == ExpTree::Type::Negation)
     {
-        // in classical mode, !!A: A; in intuitionistic mode, !!!A: !A
+        // na lógica clássica, !!A: A; na intuicionista, !!!A: !A
         if (tree->getLeftNode()->getType() == ExpTree::Type::Negation &&
             (!intuitionistic || tree->getLeftNode()->getLeftNode()->getType() == ExpTree::Type::Negation))
                 return tree->getLeftNode()->getLeftNode();
@@ -54,7 +61,7 @@ ExpPtr simplify(ExpPtr tree, bool intuitionistic)
         else if (tree->getLeftNode()->isTruehood())
             return ExpTree::False;
     }
-    // If the node is of type A & B
+    // Se o nó for do tipo A & B
     else if (tree->getType() == ExpTree::Type::And)
     {
         // # & A: #
@@ -79,7 +86,7 @@ ExpPtr simplify(ExpPtr tree, bool intuitionistic)
         else if (tree->getRightNode()->isTruehood())
             return tree->getLeftNode();
     }
-    // If the node is of type A | B
+    // Se o nó for do tipo A | B
     else if (tree->getType() == ExpTree::Type::Or)
     {
         auto node = tree;
@@ -88,11 +95,11 @@ ExpPtr simplify(ExpPtr tree, bool intuitionistic)
         // A | @: @
         if (tree->getLeftNode()->isTruehood() || tree->getRightNode()->isTruehood())
             return ExpTree::True;
-        // !A | A: @, not valid in intuitionistic mode
+        // !A | A: @, não é válido no intuicionista
         else if (!intuitionistic && tree->getLeftNode()->getType() == ExpTree::Type::Negation &&
             *tree->getRightNode() == *tree->getLeftNode()->getLeftNode())
             return ExpTree::True;
-        // A | !A: @, not valid in intuitionistic mode
+        // A | !A: @, não é válido no intuicionista
         else if (!intuitionistic && tree->getRightNode()->getType() == ExpTree::Type::Negation &&
             *tree->getLeftNode() == *tree->getRightNode()->getLeftNode())
             return ExpTree::True;

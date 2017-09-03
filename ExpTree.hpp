@@ -1,3 +1,10 @@
+//=====================================================================
+// ExpTree.hpp
+//=====================================================================
+// Aqui é feita a definição da classe ExpTree, que representa um nó na
+// árvore sintática usada para a transformação das expressões lógicas
+//=====================================================================
+
 #pragma once
 
 #include <iostream>

@@ -1,3 +1,11 @@
+//=====================================================================
+// main.cpp
+//=====================================================================
+// Aqui é feito o controle do parser e a geração da árvore inicial a
+// partir da qual serão feitas as transformações para gerar a expressão
+// final, que é o objetivo do TD
+//=====================================================================
+
 #include <cstdio>
 #include <cstring>
 #include <string>
