@@ -6,7 +6,11 @@
 
 #include "ExpTree.hpp"
 #include <new>
+#include <map>
 #include <unordered_map>
+#include <vector>
+#include <algorithm>
+#include <cassert>
 
 static ExpPtr preprocess(ExpPtr tree)
 {
@@ -25,33 +29,100 @@ static ExpPtr preprocess(ExpPtr tree)
     return tree;
 }
 
+void traverseTerminals(ExpPtr tree, std::unordered_map<ExpPtr,ExpPtr>& terminalList, unsigned long& number)
+{
+    if (!tree) return;
+
+    traverseTerminals(tree->getLeftNode(), terminalList, number);
+    traverseTerminals(tree->getRightNode(), terminalList, number);
+    
+    auto it = std::find_if(terminalList.begin(), terminalList.end(),
+    [&tree](const std::pair<ExpPtr,ExpPtr>& pair)
+    {
+        return *pair.first == *tree;
+    });
+    
+    terminalList.emplace(tree, it != terminalList.end() ? it->second : std::make_shared<ExpTree>(std::to_string(++number)));
+}
+
+void buildFormulas(ExpPtr tree, std::unordered_map<ExpPtr,ExpPtr>& terminalList, std::vector<ExpPtr>& formulaList)
+{
+    if (!tree) return;
+
+    buildFormulas(tree->getLeftNode(), terminalList, formulaList);
+    buildFormulas(tree->getRightNode(), terminalList, formulaList);
+    
+    assert(tree->getType() != ExpTree::Type::Negation);
+    assert(!tree->isTruehood());
+    
+    auto it = terminalList.find(tree);
+    assert(it != terminalList.end());
+    auto terminal = it->second;
+    
+    switch (tree->getType())
+    {
+        case ExpTree::Type::Terminal:
+            formulaList.emplace_back(std::make_shared<ExpTree>(ExpTree::Type::Implies, tree, terminal));
+            formulaList.emplace_back(std::make_shared<ExpTree>(ExpTree::Type::Implies, terminal, tree));
+            break;
+        case ExpTree::Type::Implies:
+        {
+            auto it1 = terminalList.find(tree->getLeftNode()), it2 = terminalList.find(tree->getRightNode());
+            assert(it1 != terminalList.end() && it2 != terminalList.end());
+            auto imply = std::make_shared<ExpTree>(ExpTree::Type::Implies, it1->second, it2->second);
+            formulaList.emplace_back(std::make_shared<ExpTree>(ExpTree::Type::Implies, terminal, imply));
+            formulaList.emplace_back(std::make_shared<ExpTree>(ExpTree::Type::Implies, imply, terminal));
+        } break;
+        case ExpTree::Type::And:
+        {
+            auto it1 = terminalList.find(tree->getLeftNode()), it2 = terminalList.find(tree->getRightNode());
+            assert(it1 != terminalList.end() && it2 != terminalList.end());
+            formulaList.emplace_back(std::make_shared<ExpTree>(ExpTree::Type::Implies, terminal, it1->second));
+            formulaList.emplace_back(std::make_shared<ExpTree>(ExpTree::Type::Implies, terminal, it2->second));
+            formulaList.emplace_back(std::make_shared<ExpTree>(ExpTree::Type::Implies, it1->second,
+                std::make_shared<ExpTree>(ExpTree::Type::Implies, it2->second, terminal)));
+        } break;
+        case ExpTree::Type::Or:
+        {
+            auto it1 = terminalList.find(tree->getLeftNode()), it2 = terminalList.find(tree->getRightNode());
+            assert(it1 != terminalList.end() && it2 != terminalList.end());
+            formulaList.emplace_back(std::make_shared<ExpTree>(ExpTree::Type::Implies, it1->second, terminal));
+            formulaList.emplace_back(std::make_shared<ExpTree>(ExpTree::Type::Implies, it2->second, terminal));
+            
+            for (const auto& p : terminalList)
+            {
+                auto newterm = p.second;
+                
+                auto imp1 = std::make_shared<ExpTree>(ExpTree::Type::Implies, it2->second, newterm);
+                auto imp2 = std::make_shared<ExpTree>(ExpTree::Type::Implies, imp1, newterm);
+                auto imp3 = std::make_shared<ExpTree>(ExpTree::Type::Implies, it1->second, newterm);
+                auto imp4 = std::make_shared<ExpTree>(ExpTree::Type::Implies, imp3, imp2);
+                formulaList.emplace_back(std::make_shared<ExpTree>(ExpTree::Type::Implies, terminal, imp4));
+            }
+        } break;
+        default: break;
+    }
+}
+
 ExpPtr convertImplicational(ExpPtr tree)
 {
     // Transforma negações e @s em fórmulas "palpáveis" pelo algoritmo apresentado
     tree = preprocess(tree);
+    
+    std::unordered_map<ExpPtr,ExpPtr> terminalList;
+    std::vector<ExpPtr> formulaList;
 
-    // TODO
-    // Para criar uma subexpressão (uma árvore "solta"), você usa o código
-    // auto node = std::make_shared<ExpTree>(TIPO, nó1, nó2);
-    // Tipo pode ser ExpTree::Type::And, Or ou Implies, mas aqui você só
-    // vai se preocupar com tipos Implies.
-    // Para criar um terminal (ou seja, uma variável), você só coloca o nome
-    // dela: auto term = std::make_shared<ExpTree>("nome");
-    // Para se referir aos terminais @ e # use ExpTree::True e ExpTree::False
-    // Como você vai mexer com nomes "autogerados", para transformar um número
-    // em uma string: auto str = std::to_string(número);
-    // Funções interessantes:
-    // tree->getLeftNode() e tree->getRightNode(), é o seu meio de fazer
-    // a travessia na árvore
-    // tree->getType(), retorna o tipo do nó, ExpTree::Type::And, Or, Implies,
-    // Negation ou Terminal. Aqui não existirão mais nós Negation
-    // Para fazer IGUALDADE entre árvores, compare os apontados, não os
-    // ponteiros (ou seja, faça *tree1 == *tree2, não tree1 == tree2)
-    // tree->isTruehood(): vê se a árvore é o terminal @
-    // tree->isFalsehood(): vê se a árvore é o terminal #
-    // Por fim, aconselho estudar os algoritmos std::find e um pouco mais do
-    // std::vector e std::pair
-    // Boa sorte!
+    unsigned long number = 0;
+    traverseTerminals(tree, terminalList, number);
+    if (terminalList.find(ExpTree::False) == terminalList.end())
+        terminalList.emplace(ExpTree::False, std::make_shared<ExpTree>(std::to_string(++number)));
+    
+    buildFormulas(tree, terminalList, formulaList);
+    
+    std::reverse(formulaList.begin(), formulaList.end());
+    auto result = terminalList.find(tree)->second;
+    for (ExpPtr formula : formulaList)
+        result = std::make_shared<ExpTree>(ExpTree::Type::Implies, formula, result);
 
-    return tree;
+    return result;
 }
