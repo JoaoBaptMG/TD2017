@@ -124,5 +124,5 @@ ExpPtr convertImplicational(ExpPtr tree)
     for (ExpPtr formula : formulaList)
         result = std::make_shared<ExpTree>(ExpTree::Type::Implies, formula, result);
 
-    return result;
+    return simplify(result, SimplifyMode::Implicational);
 }
