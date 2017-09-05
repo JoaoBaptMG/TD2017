@@ -102,6 +102,10 @@ void buildFormulas(ExpPtr tree, std::unordered_map<ExpPtr,ExpPtr>& terminalList,
         } break;
         default: break;
     }
+    
+    auto falseIt = terminalList.find(ExpTree::False);
+    assert(falseIt != terminalList.end());
+    formulaList.emplace_back(std::make_shared<ExpTree>(ExpTree::Type::Implies, falseIt->second, terminal));
 }
 
 ExpPtr convertImplicational(ExpPtr tree)
