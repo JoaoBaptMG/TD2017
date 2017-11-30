@@ -42,7 +42,11 @@ void traverseTerminals(ExpPtr tree, std::unordered_map<ExpPtr,ExpPtr>& terminalL
         return *pair.first == *tree;
     });
     
-    terminalList.emplace(tree, it != terminalList.end() ? it->second : std::make_shared<ExpTree>(std::to_string(++number)));
+    if (tree->getType() == ExpTree::Type::Terminal && !tree->isFalsehood())
+        terminalList.emplace(tree, tree);
+    else if (it == terminalList.end())
+        terminalList.emplace(tree, std::make_shared<ExpTree>("T" + std::to_string(++number)));
+    else terminalList.emplace(tree, it->second);
 }
 
 void buildFormulas(ExpPtr tree, std::unordered_map<ExpPtr,ExpPtr>& terminalList, std::vector<ExpPtr>& formulaList)
@@ -62,6 +66,7 @@ void buildFormulas(ExpPtr tree, std::unordered_map<ExpPtr,ExpPtr>& terminalList,
     switch (tree->getType())
     {
         case ExpTree::Type::Terminal:
+            if (tree->isFalsehood()) break;
             formulaList.emplace_back(std::make_shared<ExpTree>(ExpTree::Type::Implies, tree, terminal));
             formulaList.emplace_back(std::make_shared<ExpTree>(ExpTree::Type::Implies, terminal, tree));
             break;
@@ -102,7 +107,7 @@ void buildFormulas(ExpPtr tree, std::unordered_map<ExpPtr,ExpPtr>& terminalList,
         } break;
         default: break;
     }
-    
+
     auto falseIt = terminalList.find(ExpTree::False);
     assert(falseIt != terminalList.end());
     formulaList.emplace_back(std::make_shared<ExpTree>(ExpTree::Type::Implies, falseIt->second, terminal));

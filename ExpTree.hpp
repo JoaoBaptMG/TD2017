@@ -70,5 +70,6 @@ namespace std
     };
 }
 
-ExpPtr simplify(ExpPtr, bool intuitionistic = false);
+enum class SimplifyMode { Classical, Intuitionistic, Implicational };
+ExpPtr simplify(ExpPtr, SimplifyMode mode = SimplifyMode::Classical);
 

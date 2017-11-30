@@ -23,7 +23,7 @@ extern void logc__delete_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner);
 ExpPtr convertIntuitionistic(ExpPtr);
 ExpPtr convertImplicational(ExpPtr);
 
-void traverse(ExpPtr tree, long depth = 0)
+void traverse(ExpPtr tree, bool forExport = false, long depth = 0)
 {    
     switch (tree->getType())
     {
@@ -32,28 +32,28 @@ void traverse(ExpPtr tree, long depth = 0)
             break;
         case ExpTree::Type::Negation:
             std::cout << '!';
-            traverse(tree->getLeftNode(), depth+1);
+            traverse(tree->getLeftNode(), forExport, depth+1);
             break;
         case ExpTree::Type::And:
             std::cout << '(';
-            traverse(tree->getLeftNode(), depth+1);
+            traverse(tree->getLeftNode(), forExport, depth+1);
             std::cout << '&';
-            traverse(tree->getRightNode(), depth+1);
+            traverse(tree->getRightNode(), forExport, depth+1);
             std::cout << ')';
             break;
         case ExpTree::Type::Or:
             std::cout << '(';
-            traverse(tree->getLeftNode(), depth+1);
+            traverse(tree->getLeftNode(), forExport, depth+1);
             std::cout << '|';
-            traverse(tree->getRightNode(), depth+1);
+            traverse(tree->getRightNode(), forExport, depth+1);
             std::cout << ')';
             break;
         case ExpTree::Type::Implies:
             std::cout << '(';
-            traverse(tree->getLeftNode(), depth+1);
-            std::cout << "->";
-            traverse(tree->getRightNode(), depth+1);
-            std::cout << ')';
+            traverse(tree->getLeftNode(), forExport, depth+1);
+            std::cout << (forExport ? " imp (" : "->");
+            traverse(tree->getRightNode(), forExport, depth+1);
+            std::cout << (forExport ? "))" : ")");
             break;
         default:
             break;
@@ -64,8 +64,8 @@ int main(int argc, char** argv)
 {
     if (argc < 2)
     {
-        std::cout << "Usage: " << argv[0] << "<expression> OR" << std::endl
-                  << "       " << argv[0] << "-f <file>" << std::endl;
+        std::cout << "Usage: " << argv[0] << " <expression> OR" << std::endl
+                  << "       " << argv[0] << " -f <file>" << std::endl;
         return -1;
     }
 
@@ -109,6 +109,10 @@ int main(int argc, char** argv)
     std::cout << "Conversion to implicational logic: ";
     result = convertImplicational(result);
     traverse(result);
+    std::cout << std::endl;
+
+    std::cout << "Export result: ";
+    traverse(result, true);
     std::cout << std::endl;
     
 end:
